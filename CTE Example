@@ -1,0 +1,36 @@
+Here is a SQL query with a common table expression: 
+
+### I created a CTE named top_customer_cte to identify the top 5 customers who have paid the highest total amounts.
+
+WITH top_customers_cte AS ( 
+  SELECT B.customer_id,
+    B.first_name,
+    B.last_name,
+    E.country,
+    D.city,
+    SUM(A.amount) AS total_amount_paid
+  FROM payment A
+  JOIN customer B ON A.customer_id = B.customer_id JOIN address C ON B.address_id = C.address_id JOIN city D ON C.city_id = D.city_id
+  JOIN country E ON D.country_id = E.country_id 
+  WHERE D.city IN (
+    SELECT D.city
+    FROM customer B
+    INNER JOIN address C ON B.address_id = C.address_id INNER JOIN city D ON C.city_id = D.city_id
+    INNER JOIN country E ON D.country_ID = E.country_ID WHERE E.country IN (
+      SELECT E.country
+      FROM customer B
+      INNER JOIN address C ON B.address_id = C.address_id INNER JOIN city D ON C.city_id = D.city_id
+      INNER JOIN country E ON D.country_ID = E.country_ID GROUP BY E.country
+      ORDER BY COUNT(customer_id) DESC
+      LIMIT 10
+    )
+    GROUP BY E.country, D.city
+    ORDER BY COUNT(customer_id) DESC 
+    LIMIT 10
+  )
+  GROUP BY B.customer_id, B.first_name, B.last_name, E.country, D.city 
+  ORDER BY SUM(A.amount) DESC
+  LIMIT 5
+  )
+SELECT AVG(total_amount_paid) AS average 
+FROM top_customers_cte;
