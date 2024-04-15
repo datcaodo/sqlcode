@@ -1,18 +1,70 @@
-# Here is a SQL query that is joining tables of Data
+# The query uses Joins to relate between tables, to retrieve the top 5 customers from the top 10 cities who’ve paid the highest total amounts to Rockbuster.
 
-Top 10 Countries for Rockbuster in terms of customer numbers:
+--Top 10 Countries for Rockbuster in terms of customer numbers:
+  SELECT D.country,
+    COUNT(customer_id) AS number_of_customers
+  FROM customer A
+  INNER JOIN address B ON A.address_id = B.address_id INNER JOIN city C ON B.city_id = C.city_id
+  INNER JOIN country D ON C.country_ID = D.country_ID GROUP BY D.country
+  ORDER BY number_of_customers DESC
+  LIMIT 10
 
-SELECT D.country,
+
+-- Top 10 Cities that fall within the top 10 countries
+  SELECT D.country, C.city,
   COUNT(customer_id) AS number_of_customers
-FROM customer A
-INNER JOIN address B ON A.address_id = B.address_id INNER JOIN city C ON B.city_id = C.city_id
-INNER JOIN country D ON C.country_ID = D.country_ID GROUP BY D.country
-ORDER BY number_of_customers DESC
-LIMIT 10
+  FROM customer A
+  INNER JOIN address B ON A.address_id = B.address_id INNER JOIN city C ON B.city_id = C.city_id
+  INNER JOIN country D ON C.country_ID = D.country_ID WHERE D.country IN (
+  SELECT D.country
+  FROM customer A
+  INNER JOIN address B ON A.address_id = B.address_id INNER JOIN city C ON B.city_id = C.city_id
+  INNER JOIN country D ON C.country_ID = D.country_ID GROUP BY D.country
+  ORDER BY COUNT (customer_id) DESC
+  LIMIT 10)
+  GROUP BY D.country,C.city
+  ORDER BY COUNT (customer_id) DESC
+  LIMIT 10;
 
+-- Top 5 customers from the Top 10 cities who’ve paid the highest total amounts to Rockbuster
+SELECT B.customer_id,
+      B.first_name, 
+      B.last_name, 
+      E.country, 
+      D.city,
+      SUM (A.amount) AS total_amount_paid FROM payment A
+JOIN customer B ON A.customer_id = B.customer_id 
+JOIN address C ON B.address_id = C.address_id 
+JOIN city D ON C.city_id = D.city_id
+JOIN country E ON D.country_id = E.country_id 
+WHERE D.city IN (
 
+SELECT D.city
+FROM customer B
+INNER JOIN address C ON B.address_id = C.address_id 
+INNER JOIN city D ON C.city_id = D.city_id
+INNER JOIN country E ON D.country_ID = E.country_ID 
+WHERE E.country IN (
 
-Explanation 
-The data that I want is stored in the customer and country tables. 
-However, these tables aren’t directly connected, so I’ll need to join the customer table with the address table, the address table with the city table, and finally the city table with the country table to get the relevant information. 
-I used the INNER JOIN because we only need to extract some information of the tables. Also, to have the top 10 I add the limit 10.
+SELECT E.country
+FROM customer B
+INNER JOIN address C ON B.address_id = C.address_id 
+INNER JOIN city D ON C.city_id = D.city_id
+INNER JOIN country E ON D.country_ID = E.country_ID 
+GROUP BY E.country
+ORDER BY COUNT (customer_id) DESC
+LIMIT 10)
+GROUP BY E.country,D.city
+ORDER BY COUNT (customer_id) DESC
+LIMIT 10)
+
+GROUP BY
+      B.customer_id,
+      B.first_name, 
+      B.last_name, 
+      E.country, 
+      D.city
+ORDER BY
+SUM (A.amount) DESC 
+LIMIT 5;
+
